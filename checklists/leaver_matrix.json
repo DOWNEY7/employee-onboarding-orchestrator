@@ -1,0 +1,176 @@
+{
+  "_comment": "Leaver / offboarding matrix v1.0 — 17 steps in strict security-priority order.",
+  "_usage": "Steps MUST be executed in the order listed. Critical steps 1-3 must complete before any lower-priority actions.",
+  "steps": [
+    {
+      "step_number": 1,
+      "title": "Revoke all active sessions and refresh tokens",
+      "description": "Immediately revoke all Microsoft Graph sessions, refresh tokens, and any OAuth2 delegated tokens. Use Revoke-MgUserSignInSession and set signInSessionsValidFromDateTime.",
+      "system": "Azure AD",
+      "owner": "IT",
+      "priority": "Critical",
+      "tags": ["identity", "sessions", "security", "immediate"],
+      "execution_order": 1
+    },
+    {
+      "step_number": 2,
+      "title": "Disable Azure AD / Entra ID account",
+      "description": "Set accountEnabled = false immediately after token revocation. Block sign-in to all M365 and federated services.",
+      "system": "Azure AD",
+      "owner": "IT",
+      "priority": "Critical",
+      "tags": ["identity", "disable", "azure_ad", "immediate"],
+      "execution_order": 2
+    },
+    {
+      "step_number": 3,
+      "title": "Remove from all security groups",
+      "description": "Remove user membership from all Azure AD security groups, Microsoft 365 groups, and role assignments to prevent access via group membership.",
+      "system": "Azure AD",
+      "owner": "IT",
+      "priority": "Critical",
+      "tags": ["groups", "access_control", "azure_ad"],
+      "execution_order": 3
+    },
+    {
+      "step_number": 4,
+      "title": "Remove all M365 licences",
+      "description": "Remove all assigned M365 licence SKUs from the user. This terminates access to Exchange, Teams, SharePoint and all M365 services.",
+      "system": "M365 Admin",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["licensing", "m365"],
+      "execution_order": 4
+    },
+    {
+      "step_number": 5,
+      "title": "Convert mailbox to shared and set auto-reply",
+      "description": "Convert the user's mailbox to a shared mailbox (preserving email history). Configure an out-of-office/auto-reply directing senders to the appropriate contact. Grant the manager access.",
+      "system": "Exchange",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["email", "mailbox", "exchange"],
+      "execution_order": 5
+    },
+    {
+      "step_number": 6,
+      "title": "Transfer OneDrive data to manager",
+      "description": "Initiate OneDrive data transfer to the designated recipient (manager or data owner). Preserve for 30 days before deletion per data retention policy.",
+      "system": "SharePoint",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["onedrive", "data_transfer", "sharepoint"],
+      "execution_order": 6
+    },
+    {
+      "step_number": 7,
+      "title": "Remove MFA methods and authentication credentials",
+      "description": "Delete all registered MFA authentication methods (Authenticator app, TOTP, phone, FIDO2 keys) and SSPR methods to prevent account recovery abuse.",
+      "system": "Azure AD",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["mfa", "security", "azure_ad", "credentials"],
+      "execution_order": 7
+    },
+    {
+      "step_number": 8,
+      "title": "Remove from distribution lists",
+      "description": "Remove user from all Exchange Online distribution lists and mail-enabled security groups.",
+      "system": "Exchange",
+      "owner": "IT",
+      "priority": "Medium",
+      "tags": ["email", "distribution_list", "exchange"],
+      "execution_order": 8
+    },
+    {
+      "step_number": 9,
+      "title": "Remove Teams channel memberships",
+      "description": "Remove user from all Microsoft Teams teams and channels. Export chat history if required by retention policy.",
+      "system": "Teams",
+      "owner": "IT",
+      "priority": "Medium",
+      "tags": ["teams", "collaboration"],
+      "execution_order": 9
+    },
+    {
+      "step_number": 10,
+      "title": "Wipe and retire Intune-managed device",
+      "description": "Initiate remote wipe on all Intune-enrolled devices. Retire the device record. Update Autopilot if required. Confirm wipe completion before asset return.",
+      "system": "Intune",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["intune", "device_management", "wipe", "endpoint"],
+      "execution_order": 10
+    },
+    {
+      "step_number": 11,
+      "title": "Remove VPN certificates and remote access",
+      "description": "Revoke user VPN certificates, remove user profiles from the VPN gateway, and delete any site-to-site tunnels attributed to this user.",
+      "system": "Network",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["vpn", "remote_access", "network", "security"],
+      "execution_order": 11
+    },
+    {
+      "step_number": 12,
+      "title": "Revoke line-of-business application access",
+      "description": "Disable or delete accounts in all LOB applications (ERP, CRM, ITSM, developer tools). Reassign any workflows, approvals, or owned records to the successor.",
+      "system": "App Admin",
+      "owner": "IT / Manager",
+      "priority": "High",
+      "tags": ["applications", "lob", "access_control"],
+      "execution_order": 12
+    },
+    {
+      "step_number": 13,
+      "title": "HR system departure recorded",
+      "description": "Update the HR system with the departure date, reason, and final pay details. Close the employee record.",
+      "system": "HR",
+      "owner": "HR",
+      "priority": "High",
+      "tags": ["hr", "record_keeping"],
+      "execution_order": 13
+    },
+    {
+      "step_number": 14,
+      "title": "Asset return confirmed",
+      "description": "Confirm receipt of all company assets (laptop, mobile, access cards, peripherals). Update asset register with return date and condition.",
+      "system": "IT",
+      "owner": "IT",
+      "priority": "Medium",
+      "tags": ["asset_management", "hardware"],
+      "execution_order": 14
+    },
+    {
+      "step_number": 15,
+      "title": "Final payroll notification issued",
+      "description": "Notify payroll of the final working day for accurate last-pay calculation. Include any outstanding expense claims or holiday pay.",
+      "system": "HR",
+      "owner": "HR",
+      "priority": "Medium",
+      "tags": ["hr", "payroll", "finance"],
+      "execution_order": 15
+    },
+    {
+      "step_number": 16,
+      "title": "Audit log exported and archived",
+      "description": "Export the Microsoft Purview audit log for the user's activity (last 90 days minimum). Archive to secure storage per legal hold and retention requirements.",
+      "system": "Compliance",
+      "owner": "IT / Compliance",
+      "priority": "Critical",
+      "tags": ["audit", "compliance", "archiving", "legal"],
+      "execution_order": 16
+    },
+    {
+      "step_number": 17,
+      "title": "De-provisioning sign-off recorded",
+      "description": "IT Manager and HR to formally sign off the completed de-provisioning checklist. File in the HR/compliance system as evidence of controlled exit.",
+      "system": "Compliance",
+      "owner": "IT / HR",
+      "priority": "Critical",
+      "tags": ["sign_off", "compliance", "audit_trail"],
+      "execution_order": 17
+    }
+  ]
+}

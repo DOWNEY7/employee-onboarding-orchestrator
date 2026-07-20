@@ -1,0 +1,256 @@
+{
+  "_comment": "Onboarding matrix v1.0 — 25 steps covering M365, Azure AD, Intune, Comms, HR and Compliance.",
+  "_usage": "Steps are filtered by role and department at runtime. 'required_for' is a list of dept/role patterns; '*' means all.",
+  "steps": [
+    {
+      "step_number": 1,
+      "title": "Create M365 user account",
+      "description": "Provision the Azure AD / Entra ID user account with correct UPN, display name, department, job title and usage location.",
+      "system": "Azure AD",
+      "owner": "IT",
+      "priority": "Critical",
+      "tags": ["identity", "m365", "azure_ad"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 2,
+      "title": "Assign appropriate licence (E3 / E5 / F3)",
+      "description": "Apply the correct M365 licence SKU based on role requirements. Disable unused service plans to reduce exposure.",
+      "system": "M365 Admin",
+      "owner": "IT",
+      "priority": "Critical",
+      "tags": ["licensing", "m365"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 3,
+      "title": "Add to department security groups",
+      "description": "Add user to all Azure AD security groups for their department, granting access to shared resources and SharePoint sites.",
+      "system": "Azure AD",
+      "owner": "IT",
+      "priority": "Critical",
+      "tags": ["groups", "azure_ad", "access_control"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 4,
+      "title": "Add to distribution lists",
+      "description": "Subscribe user to relevant department and all-staff distribution lists in Exchange Online.",
+      "system": "Exchange",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["email", "distribution_list", "exchange"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 5,
+      "title": "Enable MFA and set authentication methods",
+      "description": "Enforce MFA registration via Conditional Access. Pre-configure TOTP / Authenticator app and set SSPR auth methods.",
+      "system": "Azure AD",
+      "owner": "IT",
+      "priority": "Critical",
+      "tags": ["mfa", "security", "azure_ad", "identity"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 6,
+      "title": "Conditional Access policy verification",
+      "description": "Confirm user is covered by the correct Conditional Access policies (compliant device, MFA required, named locations).",
+      "system": "Azure AD",
+      "owner": "IT",
+      "priority": "Critical",
+      "tags": ["conditional_access", "security", "azure_ad"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 7,
+      "title": "Shared mailbox access grants",
+      "description": "Grant SendAs / FullAccess permissions to any shared mailboxes the role requires.",
+      "system": "Exchange",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["email", "shared_mailbox", "exchange"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 8,
+      "title": "SharePoint site access",
+      "description": "Grant access to department SharePoint sites and document libraries. Configure sensitivity labels if required.",
+      "system": "SharePoint",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["sharepoint", "documents", "collaboration"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 9,
+      "title": "Teams channel memberships",
+      "description": "Add user to relevant Microsoft Teams teams and channels including the general staff team and department channel.",
+      "system": "Teams",
+      "owner": "IT",
+      "priority": "Medium",
+      "tags": ["teams", "collaboration", "m365"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 10,
+      "title": "Intune device enrolment preparation",
+      "description": "Create the device enrolment profile and assign it to the user. Send enrolment instructions to the user's personal email.",
+      "system": "Intune",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["intune", "device_management", "endpoint"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 11,
+      "title": "Device naming convention applied",
+      "description": "Pre-name the device according to asset naming convention (e.g. DEPT-ROLE-XXXX) in Autopilot / Intune.",
+      "system": "Intune",
+      "owner": "IT",
+      "priority": "Medium",
+      "tags": ["intune", "asset_management", "naming"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 12,
+      "title": "Software package deployment",
+      "description": "Assign mandatory software packages via Intune: Office 365 Apps, endpoint security agent, VPN client, and role-specific tooling.",
+      "system": "Intune",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["intune", "software", "deployment"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 13,
+      "title": "VPN / remote access configuration",
+      "description": "Create VPN certificate and user profile. Test connectivity from an external network before day 1.",
+      "system": "Network",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["vpn", "remote_access", "network", "security"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 14,
+      "title": "Line-of-business application access",
+      "description": "Grant access to role-specific LOB applications (ERP, CRM, ITSM, developer tools, etc.) with appropriate permission levels.",
+      "system": "App Admin",
+      "owner": "IT / Manager",
+      "priority": "High",
+      "tags": ["applications", "lob", "access_control"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 15,
+      "title": "Onboarding ticket raised in ITSM",
+      "description": "Log the onboarding request in the service desk (e.g. ServiceNow / Jira) and link all provisioning sub-tasks to the parent ticket.",
+      "system": "ServiceDesk",
+      "owner": "IT",
+      "priority": "Medium",
+      "tags": ["itsm", "ticket", "tracking"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 16,
+      "title": "HR system record linked",
+      "description": "Verify the HR system record matches the Azure AD account (employee ID, cost centre, manager hierarchy).",
+      "system": "HR",
+      "owner": "HR",
+      "priority": "High",
+      "tags": ["hr", "record_keeping", "identity"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 17,
+      "title": "Welcome email sent",
+      "description": "Send the personalised welcome email to the new starter's personal email and manager with login credentials and first-day instructions.",
+      "system": "Comms",
+      "owner": "IT / HR",
+      "priority": "High",
+      "tags": ["comms", "email", "welcome"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 18,
+      "title": "Day-1 guide delivered",
+      "description": "Provide the day-1 guide covering building access, IT setup, system logins, team contacts and the first-week agenda.",
+      "system": "Comms",
+      "owner": "IT / HR",
+      "priority": "High",
+      "tags": ["comms", "documentation", "day1"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 19,
+      "title": "Manager introduction call scheduled",
+      "description": "Schedule the first 1-to-1 between the new starter and their line manager within the first three working days.",
+      "system": "Comms",
+      "owner": "Manager",
+      "priority": "Medium",
+      "tags": ["comms", "meeting", "manager"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 20,
+      "title": "IT induction session booked",
+      "description": "Book the new starter into the IT induction session covering: password policies, data handling, acceptable use, remote working.",
+      "system": "Training",
+      "owner": "IT",
+      "priority": "Medium",
+      "tags": ["training", "induction", "it"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 21,
+      "title": "Acceptable Use Policy sent and acknowledged",
+      "description": "Issue the AUP to the new starter. Record their digital acknowledgement in the compliance system.",
+      "system": "Compliance",
+      "owner": "IT / HR",
+      "priority": "Critical",
+      "tags": ["compliance", "policy", "aup", "legal"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 22,
+      "title": "Security awareness training assigned",
+      "description": "Enrol the user in mandatory security awareness training (phishing simulation platform, annual e-learning modules).",
+      "system": "Training",
+      "owner": "IT",
+      "priority": "High",
+      "tags": ["training", "security_awareness", "compliance"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 23,
+      "title": "Emergency contact recorded",
+      "description": "Capture emergency contact details in the HR system. Confirm next-of-kin is recorded.",
+      "system": "HR",
+      "owner": "HR",
+      "priority": "Medium",
+      "tags": ["hr", "emergency_contact", "compliance"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 24,
+      "title": "Asset register updated",
+      "description": "Log the assigned laptop / peripherals / mobile device in the IT asset register with serial numbers and assignment date.",
+      "system": "IT",
+      "owner": "IT",
+      "priority": "Medium",
+      "tags": ["asset_management", "hardware", "it"],
+      "required_for": ["*"]
+    },
+    {
+      "step_number": 25,
+      "title": "Day-30 check-in reminder set",
+      "description": "Schedule a 30-day check-in for manager and IT to confirm all access is working, identify gaps, and close any outstanding tasks.",
+      "system": "Manager",
+      "owner": "Manager",
+      "priority": "Low",
+      "tags": ["follow_up", "manager", "review"],
+      "required_for": ["*"]
+    }
+  ]
+}

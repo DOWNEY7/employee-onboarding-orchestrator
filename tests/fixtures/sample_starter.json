@@ -1,0 +1,13 @@
+{
+  "first_name": "Jane",
+  "last_name": "Smith",
+  "role": "Software Engineer",
+  "department": "Engineering",
+  "start_date": "2025-09-01",
+  "manager_email": "john.doe@contoso.com",
+  "email_prefix": "jane.smith",
+  "domain": "contoso.com",
+  "licence_sku": "E3",
+  "location": "UK",
+  "additional_notes": "Jane is joining the backend platform team. She will need access to GitHub, Azure DevOps, and Jira."
+}

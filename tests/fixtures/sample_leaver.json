@@ -1,0 +1,11 @@
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john.doe@contoso.com",
+  "last_working_day": "2025-09-30",
+  "manager_email": "sarah.jones@contoso.com",
+  "reason": "Resignation",
+  "data_transfer_recipient": "sarah.jones@contoso.com",
+  "hardware_return_required": true,
+  "additional_notes": "John managed the platform team. His GitHub admin access and Azure subscription owner role should be transferred before his last day."
+}
