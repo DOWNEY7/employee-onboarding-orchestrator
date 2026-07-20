@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -174,7 +174,7 @@ def _run_audit(
             if "Required step" in f.reason
         ),
         findings=findings,
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
         auditor_notes=(
             "✅ All required steps accounted for. Pack ready for delivery."
             if not findings

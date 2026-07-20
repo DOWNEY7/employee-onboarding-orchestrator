@@ -60,7 +60,7 @@ def _build_azure_llm() -> BaseChatModel:
     api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-08-01-preview")
 
     if not endpoint:
-        raise EnvironmentError(
+        raise OSError(
             "AZURE_OPENAI_ENDPOINT is not set. "
             "Set it to your Azure OpenAI resource URL or set LLM_PROVIDER=openai."
         )
@@ -87,7 +87,7 @@ def _build_openai_llm() -> BaseChatModel:
     model = os.getenv("OPENAI_MODEL", "gpt-4o")
 
     if not api_key:
-        raise EnvironmentError(
+        raise OSError(
             "OPENAI_API_KEY is not set. "
             "Set it or configure Azure OpenAI with LLM_PROVIDER=azure."
         )

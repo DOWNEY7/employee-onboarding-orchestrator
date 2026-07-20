@@ -18,7 +18,8 @@ from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from models.state import ChecklistItem, OnboardingState, LeaverState, Priority
+from models.state import ChecklistItem, LeaverState, OnboardingState, Priority
+
 from .llm import get_llm
 
 logger = logging.getLogger(__name__)
@@ -47,11 +48,9 @@ def _filter_matrix_for_role(steps: list[dict], role: str, department: str) -> li
     filtered = []
     for step in steps:
         required_for = step.get("required_for", ["*"])
-        if "*" in required_for:
-            filtered.append(step)
-        elif role.lower() in [r.lower() for r in required_for]:
-            filtered.append(step)
-        elif department.lower() in [d.lower() for d in required_for]:
+        roles = [r.lower() for r in required_for]
+        depts = [d.lower() for d in required_for]
+        if "*" in required_for or role.lower() in roles or department.lower() in depts:
             filtered.append(step)
     return filtered
 
@@ -75,7 +74,8 @@ def _matrix_to_checklist(steps: list[dict]) -> list[ChecklistItem]:
 
 # ── LLM Enrichment ────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT_ONBOARDING = """You are an expert IT onboarding coordinator with deep knowledge of Microsoft 365, Azure AD, Intune, and corporate IT processes.
+_SYSTEM_PROMPT_ONBOARDING = """You are an expert IT onboarding coordinator with deep knowledge
+of Microsoft 365, Azure AD, Intune, and corporate IT processes.
 
 Your task is to review a base checklist of onboarding steps and enrich each item with:
 1. A more specific, actionable description tailored to the new starter's role and department.
@@ -105,9 +105,11 @@ Rules:
 - Do not invent systems that don't exist in a typical M365 environment.
 """
 
-_SYSTEM_PROMPT_LEAVER = """You are an expert IT security engineer specialising in controlled employee offboarding.
+_SYSTEM_PROMPT_LEAVER = """You are an expert IT security engineer specialising in controlled
+employee offboarding.
 
-Your task is to review a base leaver checklist and enrich each item with specific, actionable guidance tailored to the departing employee's context.
+Your task is to review a base leaver checklist and enrich each item with specific, actionable
+guidance tailored to the departing employee's context.
 
 Return your response as a valid JSON array matching the schema:
 {{
@@ -176,7 +178,9 @@ def _enrich_with_llm(
         HumanMessage(content=user_content),
     ]
 
-    logger.info("PlannerAgent: calling LLM to enrich checklist (%d base items)", len(base_checklist))
+    logger.info(
+        "PlannerAgent: calling LLM to enrich checklist (%d base items)", len(base_checklist)
+    )
     response = llm.invoke(messages)
     raw = response.content.strip()
 
@@ -193,7 +197,9 @@ def _enrich_with_llm(
         try:
             enriched.append(ChecklistItem(**item_dict))
         except Exception as exc:
-            logger.warning("PlannerAgent: skipping malformed checklist item: %s — %s", item_dict, exc)
+            logger.warning(
+                "PlannerAgent: skipping malformed checklist item: %s — %s", item_dict, exc
+            )
 
     return enriched or base_checklist  # fall back to base on parse failure
 
@@ -221,12 +227,15 @@ def planner_node(state: OnboardingState) -> dict:
     filtered_steps = _filter_matrix_for_role(all_steps, role, department)
     base_checklist = _matrix_to_checklist(filtered_steps)
 
-    logger.info("PlannerAgent: %d base steps loaded for %s / %s", len(base_checklist), role, department)
+    logger.info(
+        "PlannerAgent: %d base steps loaded for %s / %s", len(base_checklist), role, department
+    )
 
     # LLM enrichment — include reviewer notes on re-runs
     if reviewer_notes and iteration > 0:
         # Prepend reviewer feedback to additional_notes
-        form = {**form, "additional_notes": f"[REVIEWER NOTES]: {reviewer_notes}\n{form.get('additional_notes', '')}"}
+        notes = f"[REVIEWER NOTES]: {reviewer_notes}\n{form.get('additional_notes', '')}"
+        form = {**form, "additional_notes": notes}
 
     try:
         enriched = _enrich_with_llm(base_checklist, form, mode="onboarding")
@@ -255,7 +264,9 @@ def leaver_planner_node(state: LeaverState) -> dict:
 
     all_steps = _load_matrix(LEAVER_MATRIX_PATH)
     # Leaver matrix is always used in full, sorted by execution_order
-    sorted_steps = sorted(all_steps, key=lambda s: s.get("execution_order", s.get("step_number", 99)))
+    sorted_steps = sorted(
+        all_steps, key=lambda s: s.get("execution_order", s.get("step_number", 99))
+    )
     base_checklist = _matrix_to_checklist(sorted_steps)
 
     logger.info("PlannerAgent: %d leaver steps loaded", len(base_checklist))

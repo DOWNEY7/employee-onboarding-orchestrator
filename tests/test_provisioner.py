@@ -15,13 +15,13 @@ from pathlib import Path
 import pytest
 
 from agents.provisioner import (
+    LEAVER_SCRIPTS,
+    ONBOARDING_SCRIPTS,
     ProvisionerAgent,
-    _build_onboarding_context,
     _build_leaver_context,
+    _build_onboarding_context,
     _regex_validate,
     _render_template,
-    ONBOARDING_SCRIPTS,
-    LEAVER_SCRIPTS,
 )
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -146,13 +146,13 @@ class TestTemplateRendering:
 
     def test_all_onboarding_templates_render(self, starter_context):
         """Smoke test: all onboarding templates should render without error."""
-        for script_name, template_name in ONBOARDING_SCRIPTS:
+        for _script_name, template_name in ONBOARDING_SCRIPTS:
             rendered = _render_template(template_name, starter_context)
             assert rendered, f"Template {template_name} produced empty output"
 
     def test_all_leaver_templates_render(self, leaver_context):
         """Smoke test: all leaver templates should render without error."""
-        for script_name, template_name in LEAVER_SCRIPTS:
+        for _script_name, template_name in LEAVER_SCRIPTS:
             rendered = _render_template(template_name, leaver_context)
             assert rendered, f"Template {template_name} produced empty output"
 

@@ -10,37 +10,36 @@ checkpoint them atomically in SQLite.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
-from enum import Enum
-from typing import Annotated, Any
+from datetime import datetime
+from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
-
 # ── Enumerations ──────────────────────────────────────────────────────────────
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     CRITICAL = "Critical"
     HIGH = "High"
     MEDIUM = "Medium"
     LOW = "Low"
 
 
-class ApprovalStatus(str, Enum):
+class ApprovalStatus(StrEnum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
 
 
-class AuditSeverity(str, Enum):
+class AuditSeverity(StrEnum):
     CRITICAL = "Critical"
     HIGH = "High"
     MEDIUM = "Medium"
     INFO = "Info"
 
 
-class LeaverReason(str, Enum):
+class LeaverReason(StrEnum):
     RESIGNATION = "Resignation"
     REDUNDANCY = "Redundancy"
     RETIREMENT = "Retirement"

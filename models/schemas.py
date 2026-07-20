@@ -14,8 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from .state import ApprovalStatus, AuditFinding, AuditReport, LeaverReason
-
+from .state import LeaverReason
 
 # ── Request schemas ───────────────────────────────────────────────────────────
 

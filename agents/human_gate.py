@@ -60,8 +60,10 @@ def _build_approval_summary(state: dict[str, Any]) -> str:
         f"({critical_count} Critical · {high_count} High)",
         f"- **Scripts generated:** {len(scripts)}",
         f"- **Scripts:** {', '.join(scripts.keys()) or 'None'}",
-        f"- **Welcome email:** {'✅ Drafted' if comms.get('welcome_email_subject') else '❌ Missing'}",
-        f"- **Day-1 guide:** {'✅ Drafted' if comms.get('day1_guide_markdown') else '❌ Missing'}",
+        f"- **Welcome email:** "
+        f"{'✅ Drafted' if comms.get('welcome_email_subject') else '❌ Missing'}",
+        f"- **Day-1 guide:** "
+        f"{'✅ Drafted' if comms.get('day1_guide_markdown') else '❌ Missing'}",
         "",
         "## Checklist Preview (first 5 items)",
     ]
@@ -76,7 +78,8 @@ def _build_approval_summary(state: dict[str, Any]) -> str:
         "",
         "---",
         "**To approve:** POST `/approve/{run_id}` with `{\"approved\": true, \"notes\": \"\"}`",
-        "**To reject:** POST `/approve/{run_id}` with `{\"approved\": false, \"notes\": \"reason here\"}`",
+        "**To reject:** POST `/approve/{run_id}` with "
+        "`{\"approved\": false, \"notes\": \"reason here\"}`",
     ]
 
     return "\n".join(lines)
@@ -92,7 +95,9 @@ def human_gate_node(state: OnboardingState) -> dict:
     summary to the caller. When resumed, the caller must supply:
         {"approved": bool, "notes": str}
     """
-    logger.info("HumanApprovalGate: pausing for human review (iteration %d)", state.get("iteration", 1))
+    logger.info(
+        "HumanApprovalGate: pausing for human review (iteration %d)", state.get("iteration", 1)
+    )
 
     summary = _build_approval_summary(dict(state))
 

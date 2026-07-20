@@ -19,6 +19,7 @@ from typing import Any
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from models.state import CommsBundle, LeaverState, OnboardingState
+
 from .llm import get_llm
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
 
-_WELCOME_EMAIL_SYSTEM = """You are a warm, professional IT communications specialist writing on behalf of the IT team and HR at a UK technology company.
+_WELCOME_EMAIL_SYSTEM = """You are a warm, professional IT communications specialist writing on
+behalf of the IT team and HR at a UK technology company.
 
 Write a welcome email for a new employee starting on day 1. The email should be:
 - Friendly, professional, and encouraging
@@ -43,7 +45,8 @@ Return your response as JSON with this exact structure:
 Do NOT wrap in markdown fences. Return raw JSON only.
 """
 
-_DAY1_GUIDE_SYSTEM = """You are an experienced IT onboarding specialist writing a comprehensive Day-1 guide for a new employee.
+_DAY1_GUIDE_SYSTEM = """You are an experienced IT onboarding specialist writing a comprehensive
+Day-1 guide for a new employee.
 
 The guide must cover:
 1. **Where to go** — building/location, reception, parking, desk assignment
@@ -145,9 +148,11 @@ def _draft_leaver_handover_note(form: dict[str, Any]) -> dict[str, str]:
     display_name = f"{form.get('first_name', '')} {form.get('last_name', '')}".strip()
 
     system_prompt = """You are a professional HR communications specialist.
-    
-Draft a brief, sensitive, and professional handover communication to be shared with the departing employee's team.
-Include: acknowledgement of their last working day, data handover steps, who to contact for ongoing queries.
+
+Draft a brief, sensitive, and professional handover communication to be shared with the
+departing employee's team.
+Include: acknowledgement of their last working day, data handover steps, who to contact
+for ongoing queries.
 
 Return JSON: {"subject": "...", "html": "...", "plain": "...", "handover_notes_md": "..."}
 Do NOT wrap in markdown fences. Return raw JSON only.
@@ -159,7 +164,8 @@ Do NOT wrap in markdown fences. Return raw JSON only.
         f"Last Working Day: {form.get('last_working_day', 'TBC')}\n"
         f"Reason: {form.get('reason', 'Unknown')}\n"
         f"Manager: {form.get('manager_email', 'Unknown')}\n"
-        f"Data Transfer Recipient: {form.get('data_transfer_recipient') or form.get('manager_email', 'manager')}\n"
+        f"Data Transfer Recipient: "
+        f"{form.get('data_transfer_recipient') or form.get('manager_email', 'manager')}\n"
     )
 
     messages = [
@@ -213,7 +219,9 @@ def comms_node(state: OnboardingState) -> dict:
         day1_guide = _draft_day1_guide(form, checklist)
     except Exception as exc:
         logger.error("CommsAgent: Day-1 guide drafting failed: %s", exc)
-        day1_guide = "# Day 1 Guide\n\nYour IT team will provide a detailed guide before your start date."
+        day1_guide = (
+            "# Day 1 Guide\n\nYour IT team will provide a detailed guide before your start date."
+        )
 
     bundle = CommsBundle(
         welcome_email_subject=email["subject"],

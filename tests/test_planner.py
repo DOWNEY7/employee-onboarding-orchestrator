@@ -9,10 +9,7 @@ to keep the test suite fast and deterministic.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-
-import pytest
 
 from agents.planner import (
     _filter_matrix_for_role,
@@ -65,7 +62,9 @@ class TestMatrixLoading:
     def test_leaver_matrix_has_critical_first_steps(self):
         """First 3 leaver steps must all be Critical."""
         steps = _load_matrix(LEAVER_MATRIX_PATH)
-        sorted_steps = sorted(steps, key=lambda s: s.get("execution_order", s.get("step_number", 99)))
+        sorted_steps = sorted(
+            steps, key=lambda s: s.get("execution_order", s.get("step_number", 99))
+        )
         for i, step in enumerate(sorted_steps[:3]):
             assert step["priority"] == "Critical", (
                 f"Step {i+1} '{step['title']}' must be Critical, got {step['priority']}"
@@ -77,7 +76,9 @@ class TestMatrixLoading:
 class TestMatrixFiltering:
     def test_wildcard_returns_all_steps(self):
         steps = _load_matrix(ONBOARDING_MATRIX_PATH)
-        filtered = _filter_matrix_for_role(steps, role="Software Engineer", department="Engineering")
+        filtered = _filter_matrix_for_role(
+            steps, role="Software Engineer", department="Engineering"
+        )
         # All steps have required_for=['*'], so all should be returned
         assert len(filtered) == len(steps)
 
@@ -148,7 +149,9 @@ class TestChecklistConversion:
             "Remove from all security groups",
         }
         steps = _load_matrix(LEAVER_MATRIX_PATH)
-        sorted_steps = sorted(steps, key=lambda s: s.get("execution_order", s.get("step_number", 99)))
+        sorted_steps = sorted(
+            steps, key=lambda s: s.get("execution_order", s.get("step_number", 99))
+        )
         checklist = _matrix_to_checklist(sorted_steps)
         titles = {item.title for item in checklist}
         for expected_title in security_titles:

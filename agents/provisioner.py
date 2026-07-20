@@ -22,13 +22,13 @@ import re
 import shutil
 import subprocess
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from models.state import ChecklistItem, LeaverState, OnboardingState
+from models.state import LeaverState, OnboardingState
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,10 @@ LEAVER_SCRIPTS: list[tuple[str, str]] = [
 _PS_SUSPICIOUS_PATTERNS = [
     (r"Invoke-Expression\s+\$", "Avoid Invoke-Expression with variables (injection risk)"),
     (r"iex\s+\$",               "Avoid iex alias with variables (injection risk)"),
-    (r"ConvertTo-SecureString\s+[\"'][^\"']+[\"']\s+-AsPlainText\s+-Force(?!\s+\$)", "Plain-text password in script body"),
+    (
+        r"ConvertTo-SecureString\s+[\"'][^\"']+[\"']\s+-AsPlainText\s+-Force(?!\s+\$)",
+        "Plain-text password in script body",
+    ),
     (r"\bstart-process\b.*-credential",  "Start-Process with credential — review carefully"),
 ]
 
@@ -86,9 +89,17 @@ def _regex_validate(script_content: str, script_name: str) -> dict[str, Any]:
 
     # Check for required headers
     if "#Requires -Version" not in script_content:
-        warnings.append({"rule": "BestPractice", "message": "Missing #Requires -Version", "severity": "Information"})
+        warnings.append({
+            "rule": "BestPractice",
+            "message": "Missing #Requires -Version",
+            "severity": "Information",
+        })
     if "[CmdletBinding" not in script_content:
-        warnings.append({"rule": "BestPractice", "message": "Missing [CmdletBinding()]", "severity": "Information"})
+        warnings.append({
+            "rule": "BestPractice",
+            "message": "Missing [CmdletBinding()]",
+            "severity": "Information",
+        })
 
     return {
         "passed": True,
@@ -108,7 +119,9 @@ def _psscriptanalyzer_validate(script_content: str, script_name: str) -> dict[st
         logger.info("ProvisionerAgent: pwsh not found — using regex validation for %s", script_name)
         return _regex_validate(script_content, script_name)
 
-    with tempfile.NamedTemporaryFile(suffix=".ps1", mode="w", encoding="utf-8", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(
+        suffix=".ps1", mode="w", encoding="utf-8", delete=False
+    ) as tmp:
         tmp.write(script_content)
         tmp_path = tmp.name
 
@@ -117,8 +130,8 @@ def _psscriptanalyzer_validate(script_content: str, script_name: str) -> dict[st
             [
                 pwsh, "-NoProfile", "-NonInteractive", "-Command",
                 (
-                    f"$results = Invoke-ScriptAnalyzer -Path '{tmp_path}' -Severity @('Error','Warning') "
-                    f"-IncludeDefaultRules; "
+                    f"$results = Invoke-ScriptAnalyzer -Path '{tmp_path}' "
+                    f"-Severity @('Error','Warning') -IncludeDefaultRules; "
                     f"$results | ConvertTo-Json -Depth 3"
                 ),
             ],
@@ -151,7 +164,9 @@ def _psscriptanalyzer_validate(script_content: str, script_name: str) -> dict[st
         }
 
     except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as exc:
-        logger.warning("PSScriptAnalyzer failed for %s: %s — falling back to regex", script_name, exc)
+        logger.warning(
+            "PSScriptAnalyzer failed for %s: %s — falling back to regex", script_name, exc
+        )
         return _regex_validate(script_content, script_name)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
@@ -181,10 +196,16 @@ def _build_onboarding_context(form: dict[str, Any]) -> dict[str, Any]:
         "location":      form.get("location", "GB"),
         # Groups placeholder — provisioner generates stubs; real GUIDs set by admin
         "groups": [
-            {"name": f"{form.get('department', 'Dept')}-All", "id": "00000000-0000-0000-0000-000000000001"},
-            {"name": f"{form.get('department', 'Dept')}-Security", "id": "00000000-0000-0000-0000-000000000002"},
+            {
+                "name": f"{form.get('department', 'Dept')}-All",
+                "id": "00000000-0000-0000-0000-000000000001",
+            },
+            {
+                "name": f"{form.get('department', 'Dept')}-Security",
+                "id": "00000000-0000-0000-0000-000000000002",
+            },
         ],
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -194,13 +215,15 @@ def _build_leaver_context(form: dict[str, Any]) -> dict[str, Any]:
     return {
         "first_name":              form.get("first_name", ""),
         "last_name":               form.get("last_name", ""),
-        "display_name":            f"{form.get('first_name', '')} {form.get('last_name', '')}".strip(),
+        "display_name": (
+            f"{form.get('first_name', '')} {form.get('last_name', '')}".strip()
+        ),
         "email":                   form.get("email", ""),
         "last_working_day":        str(form.get("last_working_day", "")),
         "reason":                  form.get("reason", ""),
         "data_transfer_recipient": form.get("data_transfer_recipient") or manager_email,
         "hardware_return_required": form.get("hardware_return_required", True),
-        "generated_at":            datetime.now(timezone.utc).isoformat(),
+        "generated_at":            datetime.now(UTC).isoformat(),
     }
 
 

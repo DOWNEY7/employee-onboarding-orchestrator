@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from agents.auditor import AuditorAgent, _find_in_checklist, _normalise_title
-from models.state import AuditSeverity, Priority
+from models.state import AuditSeverity
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 

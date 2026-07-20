@@ -28,18 +28,17 @@ import os
 import uuid
 import zipfile
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langgraph.types import Command
 
-from graph.onboarding_graph import build_onboarding_graph
 from graph.leaver_graph import build_leaver_graph
+from graph.onboarding_graph import build_onboarding_graph
 from models.schemas import (
     ApprovalRequest,
     LeaverForm,
@@ -118,8 +117,8 @@ def _register_run(run_id: str, mode: str, form: dict) -> dict:
         "form": form,
         "status": "running",
         "approval_status": None,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
         "error": None,
     }
     _run_registry[run_id] = record
@@ -129,7 +128,7 @@ def _register_run(run_id: str, mode: str, form: dict) -> dict:
 def _update_run(run_id: str, **kwargs) -> None:
     if run_id in _run_registry:
         _run_registry[run_id].update(kwargs)
-        _run_registry[run_id]["updated_at"] = datetime.now(timezone.utc).isoformat()
+        _run_registry[run_id]["updated_at"] = datetime.now(UTC).isoformat()
 
 
 def _get_graph_state(run_id: str, mode: str) -> dict | None:
@@ -186,7 +185,7 @@ def _build_zip(run_id: str, graph_state: dict) -> bytes:
         meta = {
             "run_id": run_id,
             "form": form,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
         zf.writestr(f"{run_id}/metadata.json", json.dumps(meta, indent=2, default=str))
 
@@ -212,7 +211,7 @@ def start_onboarding(form: StarterForm) -> RunCreatedResponse:
     Submit approval via `POST /approve/{run_id}`.
     """
     run_id = _new_run_id()
-    record = _register_run(run_id, "onboarding", form.model_dump(mode="json"))
+    _register_run(run_id, "onboarding", form.model_dump(mode="json"))
 
     config = {"configurable": {"thread_id": run_id}}
     initial_state: dict[str, Any] = {
@@ -226,7 +225,7 @@ def start_onboarding(form: StarterForm) -> RunCreatedResponse:
 
     try:
         # Run graph until first interrupt (human_gate)
-        result = _onboarding_graph.invoke(initial_state, config=config)
+        _onboarding_graph.invoke(initial_state, config=config)
         _update_run(run_id, status="awaiting_approval")
         logger.info("API: run %s paused at human_gate", run_id)
     except Exception as exc:
@@ -256,7 +255,7 @@ def start_offboarding(form: LeaverForm) -> RunCreatedResponse:
     Accept a leaver form and start the de-provisioning workflow.
     """
     run_id = _new_run_id()
-    record = _register_run(run_id, "leaver", form.model_dump(mode="json"))
+    _register_run(run_id, "leaver", form.model_dump(mode="json"))
 
     config = {"configurable": {"thread_id": run_id}}
     initial_state: dict[str, Any] = {
@@ -324,8 +323,12 @@ def get_status(run_id: str) -> RunStatusResponse:
         scripts_generated=len(scripts) if scripts else None,
         audit_passed=audit.get("passed") if audit else None,
         error=record.get("error") or graph_state.get("error") or None,
-        created_at=datetime.fromisoformat(record["created_at"]) if record.get("created_at") else None,
-        updated_at=datetime.fromisoformat(record["updated_at"]) if record.get("updated_at") else None,
+        created_at=(
+            datetime.fromisoformat(record["created_at"]) if record.get("created_at") else None
+        ),
+        updated_at=(
+            datetime.fromisoformat(record["updated_at"]) if record.get("updated_at") else None
+        ),
     )
 
 
