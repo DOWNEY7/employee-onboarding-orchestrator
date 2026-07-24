@@ -18,9 +18,8 @@ from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from core.llm import get_llm
 from models.state import CommsBundle, LeaverState, OnboardingState
-
-from .llm import get_llm
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +67,7 @@ Return ONLY the Markdown content, no JSON wrapper.
 
 # ── Helper functions ───────────────────────────────────────────────────────────
 
+
 def _draft_welcome_email(form: dict[str, Any]) -> dict[str, str]:
     """Call the LLM to draft the welcome email."""
     llm = get_llm()
@@ -103,8 +103,8 @@ def _draft_welcome_email(form: dict[str, Any]) -> dict[str, str]:
     parsed = json.loads(raw)
     return {
         "subject": parsed.get("subject", f"Welcome to the team, {display_name}!"),
-        "html":    parsed.get("html", ""),
-        "plain":   parsed.get("plain", ""),
+        "html": parsed.get("html", ""),
+        "plain": parsed.get("plain", ""),
     }
 
 
@@ -115,8 +115,7 @@ def _draft_day1_guide(form: dict[str, Any], checklist: list[dict[str, Any]]) -> 
 
     # Include high-priority checklist items as context
     critical_steps = [
-        item["title"] for item in checklist
-        if item.get("priority") in ("Critical", "High")
+        item["title"] for item in checklist if item.get("priority") in ("Critical", "High")
     ][:10]
 
     user_prompt = (
@@ -195,6 +194,7 @@ Do NOT wrap in markdown fences. Return raw JSON only.
 
 
 # ── Graph Node Functions ───────────────────────────────────────────────────────
+
 
 def comms_node(state: OnboardingState) -> dict:
     """

@@ -8,9 +8,11 @@ on:
 
 env:
   PYTHON_VERSION: "3.12"
-  # LLM set to openai so CI doesn't need Azure creds; tests are mock-free
+  # LLM set to openai so CI doesn't need Azure creds; tests mock LLM calls
   LLM_PROVIDER: "openai"
   OPENAI_API_KEY: "sk-test-placeholder"   # real tests don't call the LLM
+  # API key used by the integration tests in test_api.py
+  API_KEY: "test-ci-api-key-do-not-use-in-production"
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
@@ -29,8 +31,11 @@ jobs:
       - name: Install ruff
         run: pip install ruff
 
-      - name: Run ruff
+      - name: Run ruff check
         run: ruff check . --output-format=github
+
+      - name: Run ruff format check
+        run: ruff format --check .
 
   # ────────────────────────────────────────────────────────────────────────────
   test:
@@ -54,11 +59,13 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest tests/ -v --tb=short --cov=agents --cov=models --cov=graph \
+          pytest tests/ -v --tb=short \
+            --cov=agents --cov=models --cov=graph --cov=api \
             --cov-report=term-missing --cov-report=xml:coverage.xml
         env:
           LLM_PROVIDER: ${{ env.LLM_PROVIDER }}
           OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
+          API_KEY: ${{ env.API_KEY }}
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4
@@ -139,3 +146,36 @@ jobs:
 
           print("\nAll templates rendered successfully.")
           EOF
+
+  # ────────────────────────────────────────────────────────────────────────────
+  docker-build:
+    name: Docker build validation
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t onboarding-orchestrator:ci .
+
+      - name: Verify image starts and /health responds
+        run: |
+          docker run --rm -d \
+            --name onboarding-ci \
+            -p 8000:8000 \
+            -e LLM_PROVIDER=openai \
+            -e OPENAI_API_KEY=sk-test \
+            -e API_KEY=ci-test-key \
+            -e DATABASE_URL="sqlite:////tmp/ci.db" \
+            onboarding-orchestrator:ci
+          # Wait for startup (max 30s)
+          for i in $(seq 1 10); do
+            sleep 3
+            if curl -sf http://localhost:8000/health; then
+              echo "Health check passed"
+              break
+            fi
+            echo "Waiting for startup ($i/10)..."
+          done
+          docker stop onboarding-ci

@@ -25,6 +25,7 @@ LEAVER_MATRIX_PATH = REPO_ROOT / "checklists" / "leaver_matrix.json"
 
 # ── Matrix loading ─────────────────────────────────────────────────────────────
 
+
 class TestMatrixLoading:
     def test_onboarding_matrix_loads(self):
         steps = _load_matrix(ONBOARDING_MATRIX_PATH)
@@ -67,11 +68,12 @@ class TestMatrixLoading:
         )
         for i, step in enumerate(sorted_steps[:3]):
             assert step["priority"] == "Critical", (
-                f"Step {i+1} '{step['title']}' must be Critical, got {step['priority']}"
+                f"Step {i + 1} '{step['title']}' must be Critical, got {step['priority']}"
             )
 
 
 # ── Role/department filtering ──────────────────────────────────────────────────
+
 
 class TestMatrixFiltering:
     def test_wildcard_returns_all_steps(self):
@@ -89,6 +91,7 @@ class TestMatrixFiltering:
 
 
 # ── Checklist item conversion ──────────────────────────────────────────────────
+
 
 class TestChecklistConversion:
     def test_converts_to_checklist_items(self):
@@ -159,6 +162,7 @@ class TestChecklistConversion:
 
 
 # ── Schema validation ──────────────────────────────────────────────────────────
+
 
 class TestChecklistItemSchema:
     def test_model_dump_roundtrip(self):

@@ -19,6 +19,7 @@ from typing_extensions import TypedDict
 
 # ── Enumerations ──────────────────────────────────────────────────────────────
 
+
 class Priority(StrEnum):
     CRITICAL = "Critical"
     HIGH = "High"
@@ -50,6 +51,7 @@ class LeaverReason(StrEnum):
 
 # ── Domain models (Pydantic BaseModel — richer validation) ────────────────────
 
+
 class ChecklistItem(BaseModel):
     """A single actionable step in an onboarding or offboarding checklist."""
 
@@ -57,8 +59,8 @@ class ChecklistItem(BaseModel):
     step_number: int
     title: str
     description: str
-    system: str                         # e.g. "Azure AD", "Exchange", "Intune"
-    owner: str                          # e.g. "IT", "HR", "Manager"
+    system: str  # e.g. "Azure AD", "Exchange", "Intune"
+    owner: str  # e.g. "IT", "HR", "Manager"
     priority: Priority
     tags: list[str] = Field(default_factory=list)
     completed: bool = False
@@ -103,35 +105,36 @@ class AuditReport(BaseModel):
 # We embed Pydantic models as dicts (model.model_dump()) so the checkpoint
 # serialiser can handle them without custom reducers.
 
+
 class OnboardingState(TypedDict, total=False):
     """Shared state flowing through the onboarding graph."""
 
     # ── Input ────────────────────────────────────────────────────────────────
     run_id: str
-    form: dict[str, Any]                # StarterForm.model_dump()
-    reviewer_notes: str                 # feedback from human gate on rejection
+    form: dict[str, Any]  # StarterForm.model_dump()
+    reviewer_notes: str  # feedback from human gate on rejection
 
     # ── PlannerAgent outputs ──────────────────────────────────────────────────
-    checklist: list[dict[str, Any]]     # list of ChecklistItem.model_dump()
-    role_matrix: list[dict[str, Any]]   # loaded from onboarding_matrix.json
+    checklist: list[dict[str, Any]]  # list of ChecklistItem.model_dump()
+    role_matrix: list[dict[str, Any]]  # loaded from onboarding_matrix.json
 
     # ── ProvisionerAgent outputs ──────────────────────────────────────────────
-    scripts: dict[str, str]             # {script_name: rendered_ps1_content}
-    script_validation: dict[str, Any]   # {script_name: {passed, warnings}}
+    scripts: dict[str, str]  # {script_name: rendered_ps1_content}
+    script_validation: dict[str, Any]  # {script_name: {passed, warnings}}
 
     # ── CommsAgent outputs ────────────────────────────────────────────────────
-    comms: dict[str, Any]               # CommsBundle.model_dump()
+    comms: dict[str, Any]  # CommsBundle.model_dump()
 
     # ── HumanApprovalGate ─────────────────────────────────────────────────────
-    approval_status: str                # ApprovalStatus value
+    approval_status: str  # ApprovalStatus value
     approval_notes: str
 
     # ── AuditorAgent outputs ──────────────────────────────────────────────────
-    audit_report: dict[str, Any]        # AuditReport.model_dump()
+    audit_report: dict[str, Any]  # AuditReport.model_dump()
 
     # ── Control ───────────────────────────────────────────────────────────────
-    error: str                          # set on any agent failure
-    iteration: int                      # tracks planner re-runs after rejection
+    error: str  # set on any agent failure
+    iteration: int  # tracks planner re-runs after rejection
 
 
 class LeaverState(TypedDict, total=False):
@@ -139,10 +142,10 @@ class LeaverState(TypedDict, total=False):
 
     # ── Input ────────────────────────────────────────────────────────────────
     run_id: str
-    form: dict[str, Any]                # LeaverForm.model_dump()
+    form: dict[str, Any]  # LeaverForm.model_dump()
 
     # ── PlannerAgent outputs ──────────────────────────────────────────────────
-    checklist: list[dict[str, Any]]     # security-ordered deprovisioning steps
+    checklist: list[dict[str, Any]]  # security-ordered deprovisioning steps
     role_matrix: list[dict[str, Any]]
 
     # ── ProvisionerAgent outputs ──────────────────────────────────────────────
@@ -150,7 +153,7 @@ class LeaverState(TypedDict, total=False):
     script_validation: dict[str, Any]
 
     # ── CommsAgent outputs (leaver) ───────────────────────────────────────────
-    comms: dict[str, Any]               # farewell / handover notes
+    comms: dict[str, Any]  # farewell / handover notes
 
     # ── HumanApprovalGate ─────────────────────────────────────────────────────
     approval_status: str

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 # ── Summary builder ────────────────────────────────────────────────────────────
 
+
 def _build_approval_summary(state: dict[str, Any]) -> str:
     """
     Build a human-readable summary of the pack for the reviewer.
@@ -62,8 +63,7 @@ def _build_approval_summary(state: dict[str, Any]) -> str:
         f"- **Scripts:** {', '.join(scripts.keys()) or 'None'}",
         f"- **Welcome email:** "
         f"{'✅ Drafted' if comms.get('welcome_email_subject') else '❌ Missing'}",
-        f"- **Day-1 guide:** "
-        f"{'✅ Drafted' if comms.get('day1_guide_markdown') else '❌ Missing'}",
+        f"- **Day-1 guide:** {'✅ Drafted' if comms.get('day1_guide_markdown') else '❌ Missing'}",
         "",
         "## Checklist Preview (first 5 items)",
     ]
@@ -77,15 +77,16 @@ def _build_approval_summary(state: dict[str, Any]) -> str:
     lines += [
         "",
         "---",
-        "**To approve:** POST `/approve/{run_id}` with `{\"approved\": true, \"notes\": \"\"}`",
+        '**To approve:** POST `/approve/{run_id}` with `{"approved": true, "notes": ""}`',
         "**To reject:** POST `/approve/{run_id}` with "
-        "`{\"approved\": false, \"notes\": \"reason here\"}`",
+        '`{"approved": false, "notes": "reason here"}`',
     ]
 
     return "\n".join(lines)
 
 
 # ── Graph Node Functions ───────────────────────────────────────────────────────
+
 
 def human_gate_node(state: OnboardingState) -> dict:
     """
@@ -103,11 +104,13 @@ def human_gate_node(state: OnboardingState) -> dict:
 
     # interrupt() pauses the graph and returns `summary` to the caller.
     # The graph resumes when Command(resume=...) is sent by the API layer.
-    decision = interrupt({
-        "summary": summary,
-        "message": "Please review the onboarding pack above and approve or reject.",
-        "run_id": state.get("run_id", ""),
-    })
+    decision = interrupt(
+        {
+            "summary": summary,
+            "message": "Please review the onboarding pack above and approve or reject.",
+            "run_id": state.get("run_id", ""),
+        }
+    )
 
     # decision is the value passed to Command(resume=...) — expect {"approved": bool, "notes": str}
     if isinstance(decision, dict):
@@ -138,11 +141,13 @@ def leaver_human_gate_node(state: LeaverState) -> dict:
 
     summary = _build_approval_summary(dict(state))
 
-    decision = interrupt({
-        "summary": summary,
-        "message": "Please review the de-provisioning pack above and approve or reject.",
-        "run_id": state.get("run_id", ""),
-    })
+    decision = interrupt(
+        {
+            "summary": summary,
+            "message": "Please review the de-provisioning pack above and approve or reject.",
+            "run_id": state.get("run_id", ""),
+        }
+    )
 
     if isinstance(decision, dict):
         approved = bool(decision.get("approved", False))
@@ -161,6 +166,7 @@ def leaver_human_gate_node(state: LeaverState) -> dict:
 
 
 # ── Routing functions (used by StateGraph conditional edges) ───────────────────
+
 
 def route_after_approval(state: OnboardingState | LeaverState) -> str:
     """

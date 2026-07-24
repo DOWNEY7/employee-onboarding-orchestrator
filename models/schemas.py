@@ -18,6 +18,7 @@ from .state import LeaverReason
 
 # ── Request schemas ───────────────────────────────────────────────────────────
 
+
 class StarterForm(BaseModel):
     """New-starter intake form — primary input to the onboarding graph."""
 
@@ -88,6 +89,7 @@ class ApprovalRequest(BaseModel):
 
 # ── Response schemas ──────────────────────────────────────────────────────────
 
+
 class RunCreatedResponse(BaseModel):
     run_id: str
     status: str
@@ -96,7 +98,7 @@ class RunCreatedResponse(BaseModel):
 
 class RunStatusResponse(BaseModel):
     run_id: str
-    status: str                         # "running" | "awaiting_approval" | "complete" | "failed"
+    status: str  # "running" | "awaiting_approval" | "complete" | "failed"
     approval_status: str | None = None
     checklist_count: int | None = None
     scripts_generated: int | None = None

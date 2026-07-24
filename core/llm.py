@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import AzureChatOpenAI, ChatOpenAI
@@ -22,6 +23,7 @@ from .config import get_settings
 logger = logging.getLogger(__name__)
 
 
+@lru_cache(maxsize=8)
 def get_llm(temperature: float = 0.2) -> BaseChatModel:
     """
     Return a configured chat LLM instance.
@@ -56,10 +58,7 @@ def get_llm(temperature: float = 0.2) -> BaseChatModel:
 
     if provider == "openai":
         if not settings.openai_api_key:
-            raise RuntimeError(
-                "LLM_PROVIDER=openai but OPENAI_API_KEY is not set. "
-                "Add it to .env."
-            )
+            raise RuntimeError("LLM_PROVIDER=openai but OPENAI_API_KEY is not set. Add it to .env.")
         logger.debug("Using OpenAI: model=%s", settings.openai_model)
         return ChatOpenAI(
             model=settings.openai_model,
@@ -67,6 +66,9 @@ def get_llm(temperature: float = 0.2) -> BaseChatModel:
             temperature=temperature,
         )
 
-    raise RuntimeError(
-        f"Unknown LLM_PROVIDER='{provider}'. Must be 'azure' or 'openai'."
-    )
+    raise RuntimeError(f"Unknown LLM_PROVIDER='{provider}'. Must be 'azure' or 'openai'.")
+
+
+def reset_llm_cache() -> None:
+    """Clear the LLM singleton cache. Useful in tests."""
+    get_llm.cache_clear()

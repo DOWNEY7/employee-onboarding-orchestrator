@@ -78,6 +78,7 @@ def complete_scripts() -> dict[str, str]:
 
 # ── Unit tests: normalisation & matching helpers ───────────────────────────────
 
+
 class TestNormalisation:
     def test_lowercase(self):
         assert _normalise_title("Create M365 User Account") == "create m365 user account"
@@ -113,6 +114,7 @@ class TestFindInChecklist:
 
 # ── AuditorAgent gap detection tests ──────────────────────────────────────────
 
+
 class TestAuditorGapDetection:
     """Tests that verify the auditor correctly flags missing steps."""
 
@@ -145,7 +147,8 @@ class TestAuditorGapDetection:
         """Removing a Critical step should cause the audit to FAIL."""
         # Remove the first critical step (Create M365 user account)
         truncated = [
-            item for item in full_onboarding_checklist
+            item
+            for item in full_onboarding_checklist
             if "Create M365 user account" not in item["title"]
         ]
         assert len(truncated) < len(full_onboarding_checklist), "Step was not removed"
@@ -160,8 +163,7 @@ class TestAuditorGapDetection:
         assert report.passed is False
 
         critical_findings = [
-            f for f in report.findings
-            if f.severity == AuditSeverity.CRITICAL.value
+            f for f in report.findings if f.severity == AuditSeverity.CRITICAL.value
         ]
         assert len(critical_findings) >= 1
 
@@ -174,8 +176,7 @@ class TestAuditorGapDetection:
     ):
         """Removing a High-priority step should cause the audit to FAIL."""
         truncated = [
-            item for item in full_onboarding_checklist
-            if "SharePoint" not in item["title"]
+            item for item in full_onboarding_checklist if "SharePoint" not in item["title"]
         ]
         agent = AuditorAgent()
         report = agent.run_audit(
@@ -194,10 +195,7 @@ class TestAuditorGapDetection:
         complete_comms,
     ):
         """Removing a Low-priority step should NOT fail the audit (info finding only)."""
-        truncated = [
-            item for item in full_onboarding_checklist
-            if "Day-30" not in item["title"]
-        ]
+        truncated = [item for item in full_onboarding_checklist if "Day-30" not in item["title"]]
         agent = AuditorAgent()
         report = agent.run_audit(
             required_matrix=onboarding_matrix,
@@ -262,6 +260,7 @@ class TestAuditorGapDetection:
 
 
 # ── AuditReport structure tests ────────────────────────────────────────────────
+
 
 class TestAuditReportStructure:
     def test_report_fields(

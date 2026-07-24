@@ -18,9 +18,8 @@ from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from core.llm import get_llm
 from models.state import ChecklistItem, LeaverState, OnboardingState, Priority
-
-from .llm import get_llm
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +30,7 @@ LEAVER_MATRIX_PATH = _REPO_ROOT / "checklists" / "leaver_matrix.json"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _load_matrix(path: Path) -> list[dict[str, Any]]:
     """Load and parse a checklist matrix JSON file."""
@@ -205,6 +205,7 @@ def _enrich_with_llm(
 
 
 # ── Graph Node Functions ───────────────────────────────────────────────────────
+
 
 def planner_node(state: OnboardingState) -> dict:
     """

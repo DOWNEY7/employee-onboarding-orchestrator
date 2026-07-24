@@ -46,20 +46,20 @@ _jinja_env = Environment(
 
 # ── Template mapping: checklist tag → template filename ───────────────────────
 TEMPLATE_MAP: dict[str, str] = {
-    "identity":         "create_user.ps1.j2",
-    "licensing":        "assign_licence.ps1.j2",
-    "groups":           "add_groups.ps1.j2",
-    "mfa":              "configure_mfa.ps1.j2",
-    "disable":          "deprovision_user.ps1.j2",  # leaver only
-    "sessions":         "deprovision_user.ps1.j2",  # leaver only
+    "identity": "create_user.ps1.j2",
+    "licensing": "assign_licence.ps1.j2",
+    "groups": "add_groups.ps1.j2",
+    "mfa": "configure_mfa.ps1.j2",
+    "disable": "deprovision_user.ps1.j2",  # leaver only
+    "sessions": "deprovision_user.ps1.j2",  # leaver only
 }
 
 # Output names mapped to template file
 ONBOARDING_SCRIPTS: list[tuple[str, str]] = [
-    ("01_create_user.ps1",     "create_user.ps1.j2"),
-    ("02_assign_licence.ps1",  "assign_licence.ps1.j2"),
-    ("03_add_groups.ps1",      "add_groups.ps1.j2"),
-    ("04_configure_mfa.ps1",   "configure_mfa.ps1.j2"),
+    ("01_create_user.ps1", "create_user.ps1.j2"),
+    ("02_assign_licence.ps1", "assign_licence.ps1.j2"),
+    ("03_add_groups.ps1", "add_groups.ps1.j2"),
+    ("04_configure_mfa.ps1", "configure_mfa.ps1.j2"),
 ]
 
 LEAVER_SCRIPTS: list[tuple[str, str]] = [
@@ -71,12 +71,12 @@ LEAVER_SCRIPTS: list[tuple[str, str]] = [
 
 _PS_SUSPICIOUS_PATTERNS = [
     (r"Invoke-Expression\s+\$", "Avoid Invoke-Expression with variables (injection risk)"),
-    (r"iex\s+\$",               "Avoid iex alias with variables (injection risk)"),
+    (r"iex\s+\$", "Avoid iex alias with variables (injection risk)"),
     (
         r"ConvertTo-SecureString\s+[\"'][^\"']+[\"']\s+-AsPlainText\s+-Force(?!\s+\$)",
         "Plain-text password in script body",
     ),
-    (r"\bstart-process\b.*-credential",  "Start-Process with credential — review carefully"),
+    (r"\bstart-process\b.*-credential", "Start-Process with credential — review carefully"),
 ]
 
 
@@ -89,17 +89,21 @@ def _regex_validate(script_content: str, script_name: str) -> dict[str, Any]:
 
     # Check for required headers
     if "#Requires -Version" not in script_content:
-        warnings.append({
-            "rule": "BestPractice",
-            "message": "Missing #Requires -Version",
-            "severity": "Information",
-        })
+        warnings.append(
+            {
+                "rule": "BestPractice",
+                "message": "Missing #Requires -Version",
+                "severity": "Information",
+            }
+        )
     if "[CmdletBinding" not in script_content:
-        warnings.append({
-            "rule": "BestPractice",
-            "message": "Missing [CmdletBinding()]",
-            "severity": "Information",
-        })
+        warnings.append(
+            {
+                "rule": "BestPractice",
+                "message": "Missing [CmdletBinding()]",
+                "severity": "Information",
+            }
+        )
 
     return {
         "passed": True,
@@ -128,7 +132,10 @@ def _psscriptanalyzer_validate(script_content: str, script_name: str) -> dict[st
     try:
         result = subprocess.run(
             [
-                pwsh, "-NoProfile", "-NonInteractive", "-Command",
+                pwsh,
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
                 (
                     f"$results = Invoke-ScriptAnalyzer -Path '{tmp_path}' "
                     f"-Severity @('Error','Warning') -IncludeDefaultRules; "
@@ -145,6 +152,7 @@ def _psscriptanalyzer_validate(script_content: str, script_name: str) -> dict[st
             return _regex_validate(script_content, script_name)
 
         import json
+
         output = result.stdout.strip()
         if not output or output == "null":
             findings = []
@@ -174,6 +182,7 @@ def _psscriptanalyzer_validate(script_content: str, script_name: str) -> dict[st
 
 # ── Template rendering ─────────────────────────────────────────────────────────
 
+
 def _render_template(template_name: str, context: dict[str, Any]) -> str:
     """Render a Jinja2 template with the given context."""
     template = _jinja_env.get_template(template_name)
@@ -183,17 +192,17 @@ def _render_template(template_name: str, context: dict[str, Any]) -> str:
 def _build_onboarding_context(form: dict[str, Any]) -> dict[str, Any]:
     """Build the Jinja2 context dict from a StarterForm dict."""
     return {
-        "first_name":    form.get("first_name", ""),
-        "last_name":     form.get("last_name", ""),
-        "display_name":  f"{form.get('first_name', '')} {form.get('last_name', '')}".strip(),
-        "role":          form.get("role", ""),
-        "department":    form.get("department", ""),
-        "start_date":    str(form.get("start_date", "")),
-        "email_prefix":  form.get("email_prefix", ""),
-        "domain":        form.get("domain", "contoso.com"),
-        "upn":           f"{form.get('email_prefix', '')}@{form.get('domain', 'contoso.com')}",
-        "licence_sku":   form.get("licence_sku", "E3"),
-        "location":      form.get("location", "GB"),
+        "first_name": form.get("first_name", ""),
+        "last_name": form.get("last_name", ""),
+        "display_name": f"{form.get('first_name', '')} {form.get('last_name', '')}".strip(),
+        "role": form.get("role", ""),
+        "department": form.get("department", ""),
+        "start_date": str(form.get("start_date", "")),
+        "email_prefix": form.get("email_prefix", ""),
+        "domain": form.get("domain", "contoso.com"),
+        "upn": f"{form.get('email_prefix', '')}@{form.get('domain', 'contoso.com')}",
+        "licence_sku": form.get("licence_sku", "E3"),
+        "location": form.get("location", "GB"),
         # Groups placeholder — provisioner generates stubs; real GUIDs set by admin
         "groups": [
             {
@@ -213,21 +222,20 @@ def _build_leaver_context(form: dict[str, Any]) -> dict[str, Any]:
     """Build the Jinja2 context dict from a LeaverForm dict."""
     manager_email = form.get("manager_email", "")
     return {
-        "first_name":              form.get("first_name", ""),
-        "last_name":               form.get("last_name", ""),
-        "display_name": (
-            f"{form.get('first_name', '')} {form.get('last_name', '')}".strip()
-        ),
-        "email":                   form.get("email", ""),
-        "last_working_day":        str(form.get("last_working_day", "")),
-        "reason":                  form.get("reason", ""),
+        "first_name": form.get("first_name", ""),
+        "last_name": form.get("last_name", ""),
+        "display_name": (f"{form.get('first_name', '')} {form.get('last_name', '')}".strip()),
+        "email": form.get("email", ""),
+        "last_working_day": str(form.get("last_working_day", "")),
+        "reason": form.get("reason", ""),
         "data_transfer_recipient": form.get("data_transfer_recipient") or manager_email,
         "hardware_return_required": form.get("hardware_return_required", True),
-        "generated_at":            datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
     }
 
 
 # ── Graph Node Functions ───────────────────────────────────────────────────────
+
 
 def provisioner_node(state: OnboardingState) -> dict:
     """

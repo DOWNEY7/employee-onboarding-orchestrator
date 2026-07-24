@@ -32,6 +32,10 @@ dependencies = [
     # Utilities
     "python-dotenv>=1.0.0",
     "aiofiles>=23.2.1",
+    # Security & OAuth2
+    "pyjwt>=2.9.0",
+    # Observability & Metrics
+    "prometheus-client>=0.20.0",
     # ZIP generation
     "zipfile36>=0.1.3",
 ]

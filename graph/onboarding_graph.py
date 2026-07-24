@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 # ── Max-rejections fallback node ──────────────────────────────────────────────
 
+
 def max_rejections_node(state: OnboardingState) -> dict:
     """
     Safety-valve node reached after 3 consecutive rejections.
@@ -57,13 +58,43 @@ def max_rejections_node(state: OnboardingState) -> dict:
     }
 
 
+# ── Error-sink node + routing helper ───────────────────────────────────────────────
+
+
+def error_sink_node(state: OnboardingState) -> dict:
+    """
+    Terminal node reached when any agent sets state["error"] to a non-empty string.
+    Logs the failure so it appears in structured logs and the /status response.
+    No state update is needed — the error is already recorded.
+    """
+    error = state.get("error", "unknown error")
+    run_id = state.get("run_id", "unknown")
+    logger.error("OnboardingGraph: run %s terminated early with error: %s", run_id, error)
+    return {}
+
+
+def _error_or(next_node: str):
+    """
+    Factory returning a routing function that goes to ``error_sink`` when
+    state["error"] is non-empty, otherwise proceeds to ``next_node``.
+    """
+
+    def _route(state: OnboardingState) -> str:
+        return "error_sink" if state.get("error") else next_node
+
+    _route.__name__ = f"_error_or_{next_node}"
+    return _route
+
+
 # ── Routing for human_gate → planner vs auditor ───────────────────────────────
+
 
 def _route(state: OnboardingState) -> Literal["auditor", "planner", "max_rejections"]:
     return route_after_approval(state)  # type: ignore[return-value]
 
 
 # ── Graph builder ─────────────────────────────────────────────────────────────
+
 
 def build_onboarding_graph(
     checkpointer=None,
@@ -90,6 +121,7 @@ def build_onboarding_graph(
 
         try:
             import sqlite3
+
             conn = sqlite3.connect(db_path, check_same_thread=False)
             checkpointer = SqliteSaver(conn)
             checkpointer.setup()
@@ -102,32 +134,46 @@ def build_onboarding_graph(
     builder = StateGraph(OnboardingState)
 
     # Nodes
-    builder.add_node("planner",          planner_node)
-    builder.add_node("provisioner",      provisioner_node)
-    builder.add_node("comms",            comms_node)
-    builder.add_node("human_gate",       human_gate_node)
-    builder.add_node("auditor",          auditor_node)
-    builder.add_node("max_rejections",   max_rejections_node)
+    builder.add_node("planner", planner_node)
+    builder.add_node("provisioner", provisioner_node)
+    builder.add_node("comms", comms_node)
+    builder.add_node("human_gate", human_gate_node)
+    builder.add_node("auditor", auditor_node)
+    builder.add_node("max_rejections", max_rejections_node)
+    builder.add_node("error_sink", error_sink_node)
 
-    # Edges — linear flow to the human gate
-    builder.add_edge(START,          "planner")
-    builder.add_edge("planner",      "provisioner")
-    builder.add_edge("provisioner",  "comms")
-    builder.add_edge("comms",        "human_gate")
+    # Linear flow to the human gate, with error-routing after each agent node
+    builder.add_edge(START, "planner")
+    builder.add_conditional_edges(
+        "planner",
+        _error_or("provisioner"),
+        {"provisioner": "provisioner", "error_sink": "error_sink"},
+    )
+    builder.add_conditional_edges(
+        "provisioner",
+        _error_or("comms"),
+        {"comms": "comms", "error_sink": "error_sink"},
+    )
+    builder.add_conditional_edges(
+        "comms",
+        _error_or("human_gate"),
+        {"human_gate": "human_gate", "error_sink": "error_sink"},
+    )
 
     # Conditional edge: after human gate, route by approval status
     builder.add_conditional_edges(
         "human_gate",
         _route,
         {
-            "auditor":          "auditor",
-            "planner":          "planner",
-            "max_rejections":   "max_rejections",
+            "auditor": "auditor",
+            "planner": "planner",
+            "max_rejections": "max_rejections",
         },
     )
 
-    builder.add_edge("auditor",        END)
+    builder.add_edge("auditor", END)
     builder.add_edge("max_rejections", END)
+    builder.add_edge("error_sink", END)
 
     graph = builder.compile(
         checkpointer=checkpointer,

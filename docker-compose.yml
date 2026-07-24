@@ -1,0 +1,42 @@
+# docker-compose.yml
+# ─────────────────────────────────────────────────────────────────────────────
+# Local end-to-end development environment for the Employee Onboarding Orchestrator.
+#
+# Usage:
+#   cp .env.example .env        # configure LLM credentials + API_KEY
+#   docker compose up --build   # start the API
+#   docker compose down -v      # stop and remove volumes
+#
+# The ./data/ directory is mounted as a volume so the SQLite database persists
+# across container restarts. Add ./data/ to .gitignore (already done).
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: onboarding-orchestrator
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist SQLite DB between restarts
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      # Override DATABASE_URL to use the mounted volume path
+      DATABASE_URL: "sqlite:////app/data/onboarding.db"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped

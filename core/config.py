@@ -9,6 +9,7 @@ startup. A missing required value raises a clear validation error.
 from __future__ import annotations
 
 import logging
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -55,6 +56,44 @@ class Settings(BaseSettings):
     domain: str = Field(
         default="contoso.com",
         description="Default tenant domain for generated UPNs",
+    )
+
+    # ── Security ──────────────────────────────────────────────────────────────
+    api_key: str = Field(
+        default="",
+        description=(
+            "Bearer token required on all API calls. "
+            "If empty, the server starts in dev mode with no auth enforced. "
+            "Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+        ),
+    )
+    cors_origins: list[str] = Field(
+        default_factory=lambda: [os.environ.get("CORS_ORIGINS", "*")],
+        description="Allowed CORS origins. Set to your frontend domain in production.",
+    )
+    jwt_secret_key: str = Field(
+        default="dev-jwt-secret-key-change-in-production-32bytes!",
+        description="Secret key for JWT signature validation",
+    )
+    jwt_algorithm: str = Field(
+        default="HS256",
+        description="Algorithm for signing JWT access tokens",
+    )
+    access_token_expire_minutes: int = Field(
+        default=60,
+        description="Expiration time for OAuth2 access tokens in minutes",
+    )
+    rate_limit_per_minute: int = Field(
+        default=120,
+        description="Maximum allowed requests per minute per IP",
+    )
+    enable_security_headers: bool = Field(
+        default=True,
+        description="Whether to enforce security headers middleware",
+    )
+    auth_users_json: str = Field(
+        default="",
+        description="JSON object mapping username to {password, role} for user auth store",
     )
 
     # ── Derived helpers ───────────────────────────────────────────────────────

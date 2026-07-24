@@ -29,6 +29,7 @@ REPO_ROOT = Path(__file__).parent.parent
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def sample_starter_form() -> dict:
     return {
@@ -73,6 +74,7 @@ def leaver_context(sample_leaver_form) -> dict:
 
 # ── Context building ───────────────────────────────────────────────────────────
 
+
 class TestContextBuilding:
     def test_upn_constructed_correctly(self, starter_context):
         assert starter_context["upn"] == "jane.smith@contoso.com"
@@ -105,6 +107,7 @@ class TestContextBuilding:
 
 
 # ── Template rendering ─────────────────────────────────────────────────────────
+
 
 class TestTemplateRendering:
     """Test that all templates render without errors and contain expected content."""
@@ -168,12 +171,11 @@ class TestTemplateRendering:
         """All rendered scripts should use [CmdletBinding()]."""
         for _, template_name in ONBOARDING_SCRIPTS:
             rendered = _render_template(template_name, starter_context)
-            assert "[CmdletBinding" in rendered, (
-                f"{template_name} should contain [CmdletBinding]"
-            )
+            assert "[CmdletBinding" in rendered, f"{template_name} should contain [CmdletBinding]"
 
 
 # ── Regex validation ───────────────────────────────────────────────────────────
+
 
 class TestRegexValidation:
     def test_clean_script_passes(self, starter_context):
@@ -200,6 +202,7 @@ class TestRegexValidation:
 
 # ── ProvisionerAgent integration ──────────────────────────────────────────────
 
+
 class TestProvisionerAgentWrapper:
     def test_render_script_method(self, starter_context):
         agent = ProvisionerAgent()
@@ -218,6 +221,7 @@ class TestProvisionerAgentWrapper:
         (No LLM call — only template rendering)
         """
         from agents.provisioner import provisioner_node
+
         state = {
             "form": sample_starter_form,
             "run_id": "test-run-001",
@@ -231,6 +235,7 @@ class TestProvisionerAgentWrapper:
 
     def test_leaver_provisioner_node(self, sample_leaver_form):
         from agents.provisioner import leaver_provisioner_node
+
         state = {
             "form": sample_leaver_form,
             "run_id": "test-leaver-001",

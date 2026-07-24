@@ -27,3 +27,9 @@ onboarding.db-wal
 .idea/
 .DS_Store
 Thumbs.db
+
+# Docker volume — SQLite DB mounted at runtime
+data/
+
+# Generated pack ZIPs (output_packs/ written by the API)
+output_packs/
