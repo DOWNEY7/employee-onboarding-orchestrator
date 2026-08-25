@@ -191,7 +191,8 @@ app = FastAPI(
 _cors_raw = os.environ.get("CORS_ORIGINS", "*")
 _cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
 
-# Middleware registration (Order: outer to inner: SecurityHeaders -> RateLimiting -> RequestTracing -> CORS)
+# Middleware registration
+# (Order: outer to inner: SecurityHeaders -> RateLimiting -> RequestTracing -> CORS)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimitingMiddleware)
 app.add_middleware(RequestTracingMiddleware)
@@ -281,7 +282,8 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()) -> 
     """
     OAuth2 Password Bearer flow endpoint.
     Accepts username & password (form data or URL encoded), returns signed JWT token.
-    Default credentials for dev: admin / admin_secret, hr_user / hr_secret, approver_user / approver_secret.
+    Default credentials for dev: admin / admin_secret, hr_user / hr_secret,
+    approver_user / approver_secret.
     """
     user = authenticate_user(form_data.username, form_data.password)
     if not user:

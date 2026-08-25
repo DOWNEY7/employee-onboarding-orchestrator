@@ -12,7 +12,6 @@ Provides:
 from __future__ import annotations
 
 import contextvars
-from typing import Any
 
 from fastapi import Response
 from prometheus_client import (

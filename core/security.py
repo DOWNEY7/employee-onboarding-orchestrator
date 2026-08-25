@@ -223,11 +223,9 @@ def get_current_user(
     settings = get_settings()
     jwt_secret_is_public_default = settings.jwt_secret_key == DEFAULT_JWT_SECRET_KEY
 
-    # Dev mode: API_KEY empty and no auth enforced
-    if not settings.api_key and jwt_secret_is_public_default:
-        if credentials is None:
-            # Allow dev mode guest user
-            return User(username="dev_user", hashed_password="", role=ROLE_ADMIN)
+    # Dev mode: API_KEY empty and no auth enforced — allow dev mode guest user
+    if not settings.api_key and jwt_secret_is_public_default and credentials is None:
+        return User(username="dev_user", hashed_password="", role=ROLE_ADMIN)
 
     if credentials is None:
         raise HTTPException(
@@ -277,6 +275,9 @@ class RequireRole:
         if user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Role '{user.role}' lacks permission for this operation. Required: {list(self.allowed_roles)}",
+                detail=(
+                    f"Role '{user.role}' lacks permission for this operation. "
+                    f"Required: {list(self.allowed_roles)}"
+                ),
             )
         return user

@@ -34,14 +34,14 @@ def client(tmp_path, _mocks):
     og_mock, lg_mock = _mocks
     db_path = str(tmp_path / "test_obs.db")
 
+    get_settings.cache_clear()
     with (
         patch("graph.onboarding_graph.build_onboarding_graph", return_value=(og_mock, None)),
         patch("graph.leaver_graph.build_leaver_graph", return_value=(lg_mock, None)),
+        patch.object(get_settings(), "database_url", f"sqlite:///{db_path}"),
+        TestClient(app) as test_client,
     ):
-        get_settings.cache_clear()
-        with patch.object(get_settings(), "database_url", f"sqlite:///{db_path}"):
-            with TestClient(app) as test_client:
-                yield test_client
+        yield test_client
 
 
 class TestPrometheusMetrics:
