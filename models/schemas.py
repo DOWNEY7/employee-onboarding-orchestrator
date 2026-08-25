@@ -104,6 +104,7 @@ class RunStatusResponse(BaseModel):
     scripts_generated: int | None = None
     audit_passed: bool | None = None
     error: str | None = None
+    warnings: list[str] = Field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

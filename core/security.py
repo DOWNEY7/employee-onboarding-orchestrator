@@ -26,7 +26,7 @@ from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordBearer
 from pydantic import BaseModel
 
-from core.config import get_settings
+from core.config import DEFAULT_JWT_SECRET_KEY, get_settings
 
 # ── Roles ─────────────────────────────────────────────────────────────────────
 
@@ -221,9 +221,10 @@ def get_current_user(
     If neither API_KEY nor auth is configured in dev mode, permits unauthenticated dev access.
     """
     settings = get_settings()
+    jwt_secret_is_public_default = settings.jwt_secret_key == DEFAULT_JWT_SECRET_KEY
 
     # Dev mode: API_KEY empty and no auth enforced
-    if not settings.api_key and settings.jwt_secret_key == "dev-jwt-secret-key-change-in-production-32bytes!":
+    if not settings.api_key and jwt_secret_is_public_default:
         if credentials is None:
             # Allow dev mode guest user
             return User(username="dev_user", hashed_password="", role=ROLE_ADMIN)
@@ -241,10 +242,15 @@ def get_current_user(
     if settings.api_key and hmac.compare_digest(raw_token, settings.api_key):
         return User(username="api_key_user", hashed_password="", role=ROLE_ADMIN)
 
-    # Check 2: Try JWT decoding
-    token_data = decode_access_token(raw_token)
-    if token_data:
-        return User(username=token_data.sub, hashed_password="", role=token_data.role)
+    # Check 2: Try JWT decoding — but never trust a token signed with the
+    # placeholder secret once auth has actually been enabled (API_KEY set).
+    # That secret is committed in this public repo, so anyone can forge an
+    # admin JWT with it; only accept it while the server is still in the
+    # fully-open dev-mode path handled above.
+    if not (settings.api_key and jwt_secret_is_public_default):
+        token_data = decode_access_token(raw_token)
+        if token_data:
+            return User(username=token_data.sub, hashed_password="", role=token_data.role)
 
     # Authentication failed
     raise HTTPException(

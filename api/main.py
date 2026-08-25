@@ -28,6 +28,7 @@ from __future__ import annotations
 import io
 import json
 import logging
+import os
 import sqlite3
 import uuid
 import zipfile
@@ -35,10 +36,10 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, Response, Security, status
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from langgraph.types import Command
 
 from api.middleware import (
@@ -47,20 +48,18 @@ from api.middleware import (
     SecurityHeadersMiddleware,
 )
 from api.run_store import RunStore
-from core.config import get_settings
+from core.config import DEFAULT_JWT_SECRET_KEY, get_settings
 from core.observability import (
     WORKFLOW_RUNS_TOTAL,
     get_prometheus_metrics_response,
     get_request_context,
 )
 from core.security import (
-    ROLE_ADMIN,
     ROLE_APPROVER,
     ROLE_AUDITOR,
     ROLE_HR,
     RequireRole,
     TokenResponse,
-    User,
     authenticate_user,
     create_access_token,
     get_current_user,
@@ -120,7 +119,6 @@ _auth_approver = Depends(RequireRole([ROLE_APPROVER]))
 _auth_auditor = Depends(RequireRole([ROLE_AUDITOR]))
 
 
-
 # ── Process-scoped singletons ─────────────────────────────────────────────────
 
 _onboarding_graph = None
@@ -145,6 +143,18 @@ async def lifespan(app: FastAPI):
         logger.warning(
             "API_KEY is not configured — the API is running unauthenticated. "
             "Set API_KEY in .env before exposing this service externally."
+        )
+    elif settings.jwt_secret_key == DEFAULT_JWT_SECRET_KEY:
+        logger.warning(
+            "JWT_SECRET_KEY is still the placeholder value committed in this public repo. "
+            "The /token login flow is disabled until you set a real JWT_SECRET_KEY "
+            '(python -c "import secrets; print(secrets.token_urlsafe(32))"); '
+            "the static API_KEY bearer token remains the only accepted credential."
+        )
+    if _cors_origins == ["*"]:
+        logger.warning(
+            "CORS_ORIGINS is not configured — allowing all origins (*). "
+            "Set CORS_ORIGINS to your frontend domain(s) before exposing this service externally."
         )
 
     logger.info("API: initialising (db=%s)", settings.sqlite_path)
@@ -178,9 +188,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-import os as _os
-
-_cors_raw = _os.environ.get("CORS_ORIGINS", "*")
+_cors_raw = os.environ.get("CORS_ORIGINS", "*")
 _cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
 
 # Middleware registration (Order: outer to inner: SecurityHeaders -> RateLimiting -> RequestTracing -> CORS)
@@ -430,6 +438,7 @@ def get_status(run_id: str) -> RunStatusResponse:
         scripts_generated=len(scripts) if scripts else None,
         audit_passed=audit.get("passed") if audit else None,
         error=record.get("error") or graph_state.get("error") or None,
+        warnings=graph_state.get("warnings", []),
         created_at=(
             datetime.fromisoformat(record["created_at"]) if record.get("created_at") else None
         ),
@@ -583,7 +592,9 @@ def readiness_probe() -> dict[str, Any]:
     ready = _onboarding_graph is not None and _leaver_graph is not None and db_writable
     if not ready:
         raise HTTPException(
-            status_code=status.HTTP_533_SERVICE_UNAVAILABLE if hasattr(status, "HTTP_533_SERVICE_UNAVAILABLE") else 503,
+            status_code=status.HTTP_533_SERVICE_UNAVAILABLE
+            if hasattr(status, "HTTP_533_SERVICE_UNAVAILABLE")
+            else 503,
             detail="Service not ready",
         )
 

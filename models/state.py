@@ -135,6 +135,7 @@ class OnboardingState(TypedDict, total=False):
     # ── Control ───────────────────────────────────────────────────────────────
     error: str  # set on any agent failure
     iteration: int  # tracks planner re-runs after rejection
+    warnings: list[str]  # non-fatal degradations (e.g. LLM enrichment fell back to base content)
 
 
 class LeaverState(TypedDict, total=False):
@@ -165,3 +166,4 @@ class LeaverState(TypedDict, total=False):
     # ── Control ───────────────────────────────────────────────────────────────
     error: str
     iteration: int
+    warnings: list[str]  # non-fatal degradations (e.g. LLM enrichment fell back to base content)

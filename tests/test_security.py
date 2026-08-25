@@ -12,18 +12,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
-from core.config import get_settings
+from core.config import DEFAULT_JWT_SECRET_KEY, get_settings
 from core.security import (
     ROLE_ADMIN,
-    ROLE_APPROVER,
-    ROLE_AUDITOR,
     ROLE_HR,
     ROLE_READ_ONLY,
-    User,
-    authenticate_user,
     create_access_token,
     decode_access_token,
-    get_user,
     hash_password,
     verify_password,
 )
@@ -196,6 +191,36 @@ class TestSecurityHeaders:
         assert headers.get("X-XSS-Protection") == "1; mode=block"
         assert "max-age=" in headers.get("Strict-Transport-Security", "")
         assert headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+
+
+# ── Public-Default JWT Secret Bypass Regression Test ──────────────────────────
+#
+# DEFAULT_JWT_SECRET_KEY is committed in this public repo, so anyone can sign
+# a JWT with it. If an operator sets API_KEY (believing that locks the API
+# down) but forgets to override JWT_SECRET_KEY, such a forged token must
+# still be rejected — the static API_KEY must remain the only accepted
+# credential until a real JWT secret is configured.
+
+
+class TestPublicDefaultJwtSecretRejected:
+    def test_forged_admin_jwt_rejected_when_api_key_set_but_jwt_secret_is_default(self, client):
+        settings = get_settings()
+        assert settings.jwt_secret_key == DEFAULT_JWT_SECRET_KEY  # sanity check
+
+        with patch.object(settings, "api_key", "configured-test-api-key"):
+            forged_token = create_access_token(subject="attacker", role=ROLE_ADMIN)
+            response = client.get(
+                "/status/whatever",
+                headers={"Authorization": f"Bearer {forged_token}"},
+            )
+            assert response.status_code == 401
+
+            # The static API key must still work.
+            response = client.get(
+                "/status/whatever",
+                headers={"Authorization": "Bearer configured-test-api-key"},
+            )
+            assert response.status_code == 404  # auth passed, run not found
 
 
 # ── Rate Limiting Tests ───────────────────────────────────────────────────────

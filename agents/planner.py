@@ -238,11 +238,16 @@ def planner_node(state: OnboardingState) -> dict:
         notes = f"[REVIEWER NOTES]: {reviewer_notes}\n{form.get('additional_notes', '')}"
         form = {**form, "additional_notes": notes}
 
+    warnings = list(state.get("warnings", []))
     try:
         enriched = _enrich_with_llm(base_checklist, form, mode="onboarding")
     except Exception as exc:
         logger.error("PlannerAgent: LLM enrichment failed: %s — using base checklist", exc)
         enriched = base_checklist
+        warnings.append(
+            "PlannerAgent: LLM enrichment failed — checklist generated from the base "
+            "role/department matrix only, without LLM-tailored additions."
+        )
 
     logger.info("PlannerAgent: finalised checklist with %d items", len(enriched))
 
@@ -251,6 +256,7 @@ def planner_node(state: OnboardingState) -> dict:
         "role_matrix": filtered_steps,
         "iteration": iteration + 1,
         "error": "",
+        "warnings": warnings,
     }
 
 
@@ -272,11 +278,16 @@ def leaver_planner_node(state: LeaverState) -> dict:
 
     logger.info("PlannerAgent: %d leaver steps loaded", len(base_checklist))
 
+    warnings = list(state.get("warnings", []))
     try:
         enriched = _enrich_with_llm(base_checklist, form, mode="leaver")
     except Exception as exc:
         logger.error("PlannerAgent: LLM enrichment failed: %s — using base checklist", exc)
         enriched = base_checklist
+        warnings.append(
+            "PlannerAgent: LLM enrichment failed — checklist generated from the base "
+            "leaver matrix only, without LLM-tailored additions."
+        )
 
     logger.info("PlannerAgent: leaver checklist finalised with %d items", len(enriched))
 
@@ -285,6 +296,7 @@ def leaver_planner_node(state: LeaverState) -> dict:
         "role_matrix": sorted_steps,
         "iteration": 1,
         "error": "",
+        "warnings": warnings,
     }
 
 

@@ -205,6 +205,8 @@ def comms_node(state: OnboardingState) -> dict:
     form = state.get("form", {})
     checklist = state.get("checklist", [])
 
+    warnings = list(state.get("warnings", []))
+
     try:
         email = _draft_welcome_email(form)
     except Exception as exc:
@@ -214,6 +216,9 @@ def comms_node(state: OnboardingState) -> dict:
             "html": "<p>Welcome! Your IT team will be in touch shortly.</p>",
             "plain": "Welcome! Your IT team will be in touch shortly.",
         }
+        warnings.append(
+            "CommsAgent: welcome email drafting failed — a generic placeholder email was used."
+        )
 
     try:
         day1_guide = _draft_day1_guide(form, checklist)
@@ -221,6 +226,9 @@ def comms_node(state: OnboardingState) -> dict:
         logger.error("CommsAgent: Day-1 guide drafting failed: %s", exc)
         day1_guide = (
             "# Day 1 Guide\n\nYour IT team will provide a detailed guide before your start date."
+        )
+        warnings.append(
+            "CommsAgent: Day-1 guide drafting failed — a generic placeholder guide was used."
         )
 
     bundle = CommsBundle(
@@ -231,7 +239,7 @@ def comms_node(state: OnboardingState) -> dict:
     )
 
     logger.info("CommsAgent: communications bundle complete")
-    return {"comms": bundle.model_dump(), "error": ""}
+    return {"comms": bundle.model_dump(), "error": "", "warnings": warnings}
 
 
 def leaver_comms_node(state: LeaverState) -> dict:
@@ -241,6 +249,8 @@ def leaver_comms_node(state: LeaverState) -> dict:
     """
     logger.info("CommsAgent: starting leaver communications drafting")
     form = state.get("form", {})
+
+    warnings = list(state.get("warnings", []))
 
     try:
         handover = _draft_leaver_handover_note(form)
@@ -252,6 +262,10 @@ def leaver_comms_node(state: LeaverState) -> dict:
             "plain": "Handover note to be completed manually.",
             "handover_notes_md": "## Handover\n\nTo be completed.",
         }
+        warnings.append(
+            "CommsAgent: leaver handover drafting failed — a placeholder handover note was used "
+            "and should be completed manually."
+        )
 
     # For leaver, we repurpose CommsBundle fields
     bundle = CommsBundle(
@@ -262,7 +276,7 @@ def leaver_comms_node(state: LeaverState) -> dict:
     )
 
     logger.info("CommsAgent: leaver communications bundle complete")
-    return {"comms": bundle.model_dump(), "error": ""}
+    return {"comms": bundle.model_dump(), "error": "", "warnings": warnings}
 
 
 class CommsAgent:

@@ -16,6 +16,11 @@ from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Placeholder JWT secret shipped in this public repo. Anyone can read it on
+# GitHub, so a token signed with this value must never be trusted once auth
+# has actually been enabled (enforced in core/security.py).
+DEFAULT_JWT_SECRET_KEY = "dev-jwt-secret-key-change-in-production-32bytes!"
+
 
 class Settings(BaseSettings):
     """All environment-driven configuration for the orchestrator."""
@@ -72,7 +77,7 @@ class Settings(BaseSettings):
         description="Allowed CORS origins. Set to your frontend domain in production.",
     )
     jwt_secret_key: str = Field(
-        default="dev-jwt-secret-key-change-in-production-32bytes!",
+        default=DEFAULT_JWT_SECRET_KEY,
         description="Secret key for JWT signature validation",
     )
     jwt_algorithm: str = Field(
