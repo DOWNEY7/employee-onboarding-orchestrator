@@ -51,6 +51,12 @@ def client(tmp_path, _mocks):
         patch("graph.onboarding_graph.build_onboarding_graph", return_value=(og_mock, None)),
         patch("graph.leaver_graph.build_leaver_graph", return_value=(lg_mock, None)),
         patch.object(get_settings(), "database_url", f"sqlite:///{db_path}"),
+        # This fixture's tests authenticate via JWT, not the static API key.
+        # Explicitly clear API_KEY so it can't leak in from the environment
+        # (e.g. CI sets API_KEY globally for test_api.py's fixture) — with
+        # it set, JWTs signed with the still-default JWT_SECRET_KEY are
+        # correctly rejected (see TestPublicDefaultJwtSecretRejected below).
+        patch.object(get_settings(), "api_key", ""),
         TestClient(app) as test_client,
     ):
         yield test_client
