@@ -3,10 +3,18 @@ FROM python:3.12-slim AS build
 
 WORKDIR /app
 
-# Install dependencies separately for layer caching
-COPY pyproject.toml .
+# hatchling (the build backend) needs the actual source tree present to
+# build/install this project — a bare pyproject.toml isn't enough, and
+# README.md is required because pyproject.toml references it as `readme`.
+COPY pyproject.toml README.md .
+COPY agents/ agents/
+COPY api/ api/
+COPY core/ core/
+COPY graph/ graph/
+COPY models/ models/
+
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -e .
+    && pip install --no-cache-dir .
 
 # ── Stage: runtime ─────────────────────────────────────────────────────────────
 FROM python:3.12-slim AS runtime
@@ -30,8 +38,11 @@ COPY models/ models/
 COPY scripts/ scripts/
 COPY pyproject.toml .
 
-# Data directory for SQLite persistence (mount a volume here in production)
-RUN mkdir -p /app/data && chown appuser:appuser /app/data
+# Data directory for SQLite persistence (mount a volume here in production),
+# plus the default output_packs dir the app writes finalised ZIPs into —
+# appuser needs write access to both since it owns none of /app by default.
+RUN mkdir -p /app/data /app/output_packs \
+    && chown -R appuser:appuser /app/data /app/output_packs
 
 USER appuser
 

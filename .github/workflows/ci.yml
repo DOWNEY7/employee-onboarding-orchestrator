@@ -55,6 +55,11 @@ jobs:
           pip install --upgrade pip
           pip install -e .
           pip install pip-audit
+          # Installing -e . was only to pull in third-party dependencies —
+          # pip-audit can't look this unpublished local package up on PyPI
+          # and --strict fails the whole scan if it tries. Uninstalling it
+          # leaves every third-party dependency in place for the audit.
+          pip uninstall -y employee-onboarding-orchestrator
 
       - name: Audit installed dependencies
         run: pip-audit --strict
